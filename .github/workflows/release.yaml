@@ -1,0 +1,22 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Compress
+        run: tar -zcvf vul-kubectl.tar.gz vul-kubectl LICENSE
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            vul-kubectl.tar.gz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
