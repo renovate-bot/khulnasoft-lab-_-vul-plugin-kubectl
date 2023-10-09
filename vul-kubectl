@@ -1,0 +1,57 @@
+#!/bin/bash
+
+# Usage
+function usage() {
+  cat << EOS >&2
+Usage: vul kubectl [-h,--help] TYPE NAME [VUL OPTION]
+ A Vul plugin that scans the images of a kubernetes resource.
+
+Options:
+  -h, --help    Show usage.
+
+Examples:
+  # Scan a Pod
+  vul kubectl pod mypod
+
+  # Scan a Deployment
+  vul kubectl deployment mydeployment -n mynamespace
+
+  # Scan a Job and filter by severity
+  vul kubectl job myjob -n mynamespace -- --severity CRITICAL
+EOS
+  exit
+}
+
+function scan {
+  vul image $@
+}
+
+if [[ ($# -eq 0) || ($1 == "--help") || ($1 == "-h") ]]; then
+  # No commands or the --help flag passed and we'll show the usage instructions
+  usage
+fi
+
+KUBECTL_PARAM=()
+for opt in "$@"; do
+  case "${opt}" in
+    '--' )
+      shift
+      VUL_PARAM=( "$@" )
+      break
+      ;;
+    * )
+      if [ -n "$1" ]; then
+        KUBECTL_PARAM+=("$1")
+      fi
+      shift
+      ;;
+  esac
+done
+
+
+images=$(kubectl get "${KUBECTL_PARAM[@]}" -oyaml | sed -nE 's@[^\w]*image: ([a-zA-Z0-9/:])@\1@p' | uniq)
+while read -r image; do
+  if [ -n "$image" ]; then
+    scan "${VUL_PARAM[@]}" "$image"
+  fi
+done <<< "$images"
