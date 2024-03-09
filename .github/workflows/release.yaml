@@ -14,7 +14,7 @@ jobs:
       - name: Compress
         run: tar -zcvf vul-kubectl.tar.gz vul-kubectl LICENSE
       - name: Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           files: |
             vul-kubectl.tar.gz
